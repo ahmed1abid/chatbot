@@ -69,4 +69,30 @@ app.put('/chatbots/:id/interface', (req, res) => {
   res.json(chatBot);
 });
 
+app.set('view engine', 'ejs');
+app.use(bodyParser.urlencoded({ extended: true }));
+
+app.get('/', (req, res) => {
+  res.render('home');
+});
+
+app.get('/login', (req, res) => {
+  res.render('login');
+});
+
+app.post('/login', (req, res) => {
+  const { username, password } = req.body;
+
+  // Check if username and password are valid
+  // ...
+  // If valid, redirect to page
+  res.redirect('/page');
+});
+
+app.get('/register', (req, res) => {
+  res.render('register');
+});
+
+
 app.listen(3000, () => console.log('Server listening on port 3000...'));
+
