@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Chatbot Example</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+  </head>
+  <body>
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-md-6">
+          <h1 class="text-center mb-4">Chatbot Example</h1>
+          <div id="chat-window" class="card mb-4">
+            <div class="card-body">
+              <div class="chat-log">
+                <% for(let i=0; i<chatlog.length; i++) { %>
+                  <% if(chatlog[i].isUser) { %>
+                    <div class="user-msg"><%= chatlog[i].message %></div>
+                  <% } else { %>
+                    <div class="bot-msg"><%= chatlog[i].message %></div>
+                  <% } %>
+                <% } %>
+              </div>
+            </div>
+          </div>
+          <form id="chat-form" class="card">
+            <div class="card-body">
+              <div class="form-group">
+                <input type="text" id="chat-input" name="chat-input" class="form-control" placeholder="Type your message...">
+              </div>
+              <button type="submit" class="btn btn-primary btn-block">Send</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+    <script>
+      $(function() {
+        $('#chat-form').submit(function(event) {
+          event.preventDefault();
+          var message = $('#chat-input').val();
+          $('#chat-input').val('');
+          addChatMessage(message, true);
+          $.get('/chat', { message: message }, function(response) {
+            addChatMessage(response, false);
+          });
+        });
+        function addChatMessage(message, isUser) {
+          $('.chat-log').append(isUser ? '<div class="user-msg">' : '<div class="bot-msg">');
+          $('.chat-log').append(message);
+          $('.chat-log').append('</div>');
+        }
+      });
+    </script>
+  </body>
+</html>

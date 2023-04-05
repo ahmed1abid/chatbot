@@ -12,9 +12,6 @@ const chatBots = [
 ];
 const bot = require('./bot.js');
 
-bot.reply('hello').then((response) => {
-  console.log(response);
-});
 
 // Create a new ChatBot
 app.post('/chatbots', (req, res) => {
@@ -74,5 +71,10 @@ app.put('/chatbots/:id/interface', (req, res) => {
   chatBot.interface = req.body.interface;
   res.json(chatBot);
 });
+// const bot = require('./bot.js');
+
+// bot.reply('hello').then((response) => {
+//   console.log(response);
+// });
 
 app.listen(3000, () => console.log('Server listening on port 3000...'));
