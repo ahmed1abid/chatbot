@@ -1,2 +1,3 @@
- node_modules 
- # run git install express
+ ./node_modules 
+ package*
+#  run git install express

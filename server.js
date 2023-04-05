@@ -3,12 +3,18 @@ const bodyParser = require('body-parser');
 const app = express();
 app.use(bodyParser.json());
 
+
 // Define a data model to represent ChatBots and their associated information
 const chatBots = [
   { id: 1, name: 'Steeve', personality: 'standard.rive', interface: 'web' },
   { id: 2, name: 'Eude', personality: 'custom.rive', interface: 'discord' },
   { id: 3, name: 'Hubert', personality: 'advanced.rive', interface: 'slack' }
 ];
+const bot = require('./bot.js');
+
+bot.reply('hello').then((response) => {
+  console.log(response);
+});
 
 // Create a new ChatBot
 app.post('/chatbots', (req, res) => {
