@@ -1,8 +1,13 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const app = express();
-app.use(bodyParser.json());
+const ejs = require('ejs');
+const Classchatbot = require('./Classchatbot'); // import the Classchatbot class
+const myChatbot = new Classchatbot('My Chatbot', ['friendly', 'helpful'], ['web', 'mobile']);
 
+
+app.use(bodyParser.json());
+app.set('view engine', 'ejs');
 
 // Define a data model to represent ChatBots and their associated information
 const chatBots = [
@@ -10,7 +15,11 @@ const chatBots = [
   { id: 2, name: 'Eude', personality: 'custom.rive', interface: 'discord' },
   { id: 3, name: 'Hubert', personality: 'advanced.rive', interface: 'slack' }
 ];
-const bot = require('./bot.js');
+
+app.get('/interface', (req, res) => {
+  const chatlog = myChatbot.getChatLog();
+  res.render('interface', { chatlog: chatlog });
+});
 
 
 // Create a new ChatBot
@@ -60,7 +69,11 @@ app.delete('/chatbots/:id', (req, res) => {
 app.put('/chatbots/:id/personality', (req, res) => {
   const chatBot = chatBots.find(c => c.id === parseInt(req.params.id));
   if (!chatBot) return res.status(404).send('The ChatBot with the given ID was not found.');
+
+  // Update the personality file of the ChatBot
   chatBot.personality = req.body.personality;
+  bot.updatePersonality(chatBot.personality);
+
   res.json(chatBot);
 });
 
@@ -68,9 +81,14 @@ app.put('/chatbots/:id/personality', (req, res) => {
 app.put('/chatbots/:id/interface', (req, res) => {
   const chatBot = chatBots.find(c => c.id === parseInt(req.params.id));
   if (!chatBot) return res.status(404).send('The ChatBot with the given ID was not found.');
+
+  // Update the interface file of the ChatBot
   chatBot.interface = req.body.interface;
+  bot.updateInterface(chatBot.interface);
+
   res.json(chatBot);
 });
+
 // const bot = require('./bot.js');
 
 // bot.reply('hello').then((response) => {
