@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Chatbot Example</title>
+    <title>Chatbot </title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
   </head>
   <body>
@@ -33,11 +33,13 @@
         </div>
       </div>
     </div>
+    <script src="/path/to/Classchatbot.js"></script> <!-- Add this line -->
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
     <script>
       $(function() {
+        const chatbot = new ChatBot("MyChatBot", [], []);
         $('#chat-form').submit(function(event) {
           event.preventDefault();
           var message = $('#chat-input').val();
@@ -47,6 +49,7 @@
             addChatMessage(response, false);
           });
         });
+        
         function addChatMessage(message, isUser) {
           $('.chat-log').append(isUser ? '<div class="user-msg">' : '<div class="bot-msg">');
           $('.chat-log').append(message);
