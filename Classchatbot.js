@@ -1,10 +1,26 @@
+const RiveScript = require('rivescript');
+
 class Classchatbot {
-  
-    constructor(name, personality, interfaces) {
+  constructor(name, personality) {
     this.name = name;
     this.personality = personality;
-    this.interfaces = interfaces;
     this.chatlog = [];
+    this.brain = new RiveScript();
+  }
+
+  loadBrainFile(file) {
+    return new Promise((resolve, reject) => {
+      this.brain.loadFile(file, () => {
+        this.brain.sortReplies();
+        resolve();
+      }, reject);
+    });
+  }
+  sendMessage(message) {
+    const reply = this.brain.reply('localuser', message);
+    this.addToChatLog(message, true);
+    this.addToChatLog(reply, false);
+    return reply;
   }
 
   addInterface(interfaces) {
@@ -36,5 +52,6 @@ class Classchatbot {
   getChatLog() {
     return this.chatlog;
   }
+  
 }
 module.exports = Classchatbot;
