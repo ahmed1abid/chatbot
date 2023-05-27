@@ -1,3 +1,2 @@
- ./node_modules 
- package*
+.gitignore
 #  run git install express
