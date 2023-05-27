@@ -1,61 +1,54 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <title>Chatbot </title>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
-  </head>
-  <body>
-    <div class="container">
-      <div class="row justify-content-center">
-        <div class="col-md-6">
-          <h1 class="text-center mb-4">Chatbot Example</h1>
-          <div id="chat-window" class="card mb-4">
-            <div class="card-body">
-              <div class="chat-log">
-                <% for(let i=0; i<chatlog.length; i++) { %>
-                  <% if(chatlog[i].isUser) { %>
-                    <div class="user-msg"><%= chatlog[i].message %></div>
-                  <% } else { %>
-                    <div class="bot-msg"><%= chatlog[i].message %></div>
-                  <% } %>
-                <% } %>
-              </div>
+<head>
+  <title>Chatbot</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+  <style>
+    /* Add your custom styles here */
+    .chat-log {
+      overflow-y: scroll;
+      height: 300px;
+    }
+    .user-msg {
+      background-color: #f2f2f2;
+      padding: 10px;
+      margin-bottom: 10px;
+    }
+    .bot-msg {
+      background-color: #e2e2e2;
+      padding: 10px;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Chatbot: <%= myChatbot.name %></h1>
+    <div class="row justify-content-center">
+      <div class="col-md-6">
+        <h1 class="text-center mb-4"><%= myChatbot.personality %></h1>
+        <div id="chat-window" class="card mb-4">
+          <div class="card-body">
+            <div class="chat-log">
+              <% const chatlog = myChatbot.getChatLog(); %>
+              <% for (let i = 0; i < chatlog.length; i++) { %>
+                <% const messageClass = chatlog[i].isUser ? 'user-msg' : 'bot-msg'; %>
+                <div class="<%= messageClass %>"><%= chatlog[i].message %></div>
+              <% } %>
             </div>
           </div>
-          <form id="chat-form" class="card">
-            <div class="card-body">
-              <div class="form-group">
-                <input type="text" id="chat-input" name="chat-input" class="form-control" placeholder="Type your message...">
-              </div>
-              <button type="submit" class="btn btn-primary btn-block">Send</button>
-            </div>
-          </form>
         </div>
+        <form id="chat-form" class="mt-3" method="POST">
+          <div class="form-group">
+            <input type="text" class="form-control" id="chat-input" name="message" placeholder="Type your message...">
+          </div>
+          <button type="submit" class="btn btn-primary">Send</button>
+        </form>
       </div>
     </div>
-    <script src="/path/to/Classchatbot.js"></script> <!-- Add this line -->
-    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
-    <script>
-      $(function() {
-        const chatbot = new ChatBot("MyChatBot", [], []);
-        $('#chat-form').submit(function(event) {
-          event.preventDefault();
-          var message = $('#chat-input').val();
-          $('#chat-input').val('');
-          addChatMessage(message, true);
-          $.get('/chat', { message: message }, function(response) {
-            addChatMessage(response, false);
-          });
-        });
-        
-        function addChatMessage(message, isUser) {
-          $('.chat-log').append(isUser ? '<div class="user-msg">' : '<div class="bot-msg">');
-          $('.chat-log').append(message);
-          $('.chat-log').append('</div>');
-        }
-      });
-    </script>
-  </body>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="../conversation.js"></script>
+</body>
 </html>

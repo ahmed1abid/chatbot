@@ -3,11 +3,12 @@ const bodyParser = require('body-parser');
 const app = express();
 const ejs = require('ejs');
 const Classchatbot = require('./Classchatbot'); // import the Classchatbot class
-const myChatbot = new Classchatbot('My Chatbot', ['friendly', 'helpful'], ['web', 'mobile']);
-
 
 app.use(bodyParser.json());
 app.set('view engine', 'ejs');
+app.use(bodyParser.urlencoded({ extended: true }));
+
+// Set up body parser middleware
 
 // Define a data model to represent ChatBots and their associated information
 const chatBots = [
@@ -15,13 +16,6 @@ const chatBots = [
   { id: 2, name: 'Eude', personality: 'custom.rive', interface: 'discord' },
   { id: 3, name: 'Hubert', personality: 'advanced.rive', interface: 'slack' }
 ];
-
-app.get('/interface', (req, res) => {
-  const chatlog = myChatbot.getChatLog();
-  res.render('interface', { chatlog: chatlog });
-});
-
-
 // Create a new ChatBot
 app.post('/chatbots', (req, res) => {
   const chatBot = {
@@ -89,25 +83,11 @@ app.put('/chatbots/:id/interface', (req, res) => {
   res.json(chatBot);
 });
 
-// const bot = require('./bot.js');
-
-// bot.reply('hello').then((response) => {
-//   console.log(response);
-// });
-
-
 const fs = require('fs');
 const bcrypt = require('bcrypt');
 const saltRounds = 10;
 const session = require('express-session');
 
-// Set up body parser middleware
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
-
-// Set up EJS view engine
-app.set('view engine', 'ejs');
-app.use(bodyParser.urlencoded({ extended: true }));
 
 // Set up session middleware
 app.use(session({
@@ -132,7 +112,6 @@ function authenticate(req, res, next) {
   }
   next();
 }
-
 app.get('/', (req, res) => {
   res.render('home.ejs');
 });
@@ -153,6 +132,42 @@ app.post('/login', (req, res) => {
   res.render('login', { error: 'Invalid username or password' });
 });
 
+  // Check if username and password are valid
+  // ...
+  // If valid, redirect to page
+  res.redirect('/whichchat');
+});
+
+app.get('/addbot', (req, res) => {
+  res.render('addbot');
+});
+
+app.post('/create-chatbot', (req, res) => {
+  const name = req.body.name;
+  const personality = req.body.personality;
+
+  // Load the brain file based on the selected personality
+  let brainFile;
+  if (personality === 'standard') {
+    brainFile = 'standard.rive';
+  } else if (personality === 'friendly') {
+    brainFile = 'friendly.rive';
+  } else if (personality === 'professional') {
+    brainFile = 'professional.rive';
+  } else if (personality === 'humorous') {
+    brainFile = 'humorous.rive';
+  }
+
+  // Create and configure the chatbot with the selected name and loaded brain file
+  const myChatbot = new Classchatbot(name, personality);
+  myChatbot.loadBrainFile(`${brainFile}`);
+  app.locals.myChatbot = myChatbot;
+
+  console.log(app.locals.myChatbot);
+  // Redirect to the '/interface' route
+  res.redirect('/interface');
+});
+
 app.get('/logout', (req, res) => {
   req.session.destroy((err) => {
     if (err) {
@@ -160,14 +175,25 @@ app.get('/logout', (req, res) => {
     }
     res.redirect('/login');
   });
-});
-
 // Define routes for registration
 app.get('/register', (req, res) => {
   res.render('register');
 });
+app.get('/interface', (req, res) => {
+  // Render the interface view and pass the chat log as well
+  const myChatbot = app.locals.myChatbot; 
+  res.render('interface', { myChatbot });
+});
 
-app.post('/register', (req, res) => {
+app.post('/interface', (req, res) => {
+  const message = req.body.message;
+  app.locals.myChatbot.sendMessage(message);
+  // Redirect to the '/interface' route to display the updated chat log
+  res.redirect('/interface');
+
+});
+	
+	app.post('/register', (req, res) => {
   const { username, email, password } = req.body;
   const user = logins.find((u) => u.username === username);
   if (user) {
@@ -189,5 +215,5 @@ app.get('/home', authenticate, (req, res) => {
 // Start server
 app.listen(3000, () => {
   console.log('Server started on port 3000');
-});
 
+app.listen(3000, () => console.log('Server listening on port 3000...'));
