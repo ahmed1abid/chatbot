@@ -8,8 +8,10 @@ app.use(bodyParser.json());
 app.set('view engine', 'ejs');
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// Set up body parser middleware
 
+app.get('/', (req, res) => {
+  res.render('home.ejs');
+});
 // Define a data model to represent ChatBots and their associated information
 const chatBots = [
   { id: 1, name: 'Steeve', personality: 'standard.rive', interface: 'web' },
@@ -70,7 +72,19 @@ app.put('/chatbots/:id/personality', (req, res) => {
 
   res.json(chatBot);
 });
+app.get('/interface', (req, res) => {
+  // Render the interface view and pass the chat log as well
+  const myChatbot = app.locals.myChatbot; 
+  res.render('interface', { myChatbot });
+});
 
+app.post('/interface', (req, res) => {
+  const message = req.body.message;
+  app.locals.myChatbot.sendMessage(message);
+  // Redirect to the '/interface' route to display the updated chat log
+  res.redirect('/interface');
+
+});
 // Modify the interface of a ChatBot
 app.put('/chatbots/:id/interface', (req, res) => {
   const chatBot = chatBots.find(c => c.id === parseInt(req.params.id));
@@ -81,61 +95,6 @@ app.put('/chatbots/:id/interface', (req, res) => {
   bot.updateInterface(chatBot.interface);
 
   res.json(chatBot);
-});
-
-const fs = require('fs');
-const bcrypt = require('bcrypt');
-const saltRounds = 10;
-const session = require('express-session');
-
-
-// Set up session middleware
-app.use(session({
-  secret: 'your-secret-key',
-  resave: false,
-  saveUninitialized: true
-}));
-
-// Read login information from file
-let logins;
-try {
-  const fileContents = fs.readFileSync('logins.json', 'utf8');
-  logins = JSON.parse(fileContents || '[]');
-} catch (err) {
-  console.error(`Error reading login file: ${err}`);
-  logins = [];
-}
-// Define a middleware function to check if user is authenticated
-function authenticate(req, res, next) {
-  if (!req.session || !req.session.isAuthenticated) {
-    return res.redirect('/login');
-  }
-  next();
-}
-app.get('/', (req, res) => {
-  res.render('home.ejs');
-});
-
-// Define routes for login and logout
-app.get('/login', (req, res) => {
-  res.render('login');
-});
-
-app.post('/login', (req, res) => {
-  const { username, password } = req.body;
-  const user = logins.find((u) => u.username === username);
-  if (user && bcrypt.compareSync(password, user.password)) {
-    req.session.isAuthenticated = true;
-    req.session.username = username;
-    return res.redirect('interface.ejs');
-  }
-  res.render('login', { error: 'Invalid username or password' });
-});
-
-  // Check if username and password are valid
-  // ...
-  // If valid, redirect to page
-  res.redirect('/whichchat');
 });
 
 app.get('/addbot', (req, res) => {
@@ -168,30 +127,66 @@ app.post('/create-chatbot', (req, res) => {
   res.redirect('/interface');
 });
 
+
+const fs = require('fs');
+const bcrypt = require('bcrypt');
+const saltRounds = 10;
+const session = require('express-session');
+
+
+// Set up session middleware
+app.use(session({
+  secret: 'your-secret-key',
+  resave: false,
+  saveUninitialized: true
+}));
+
+// Read login information from file
+let logins;
+try {
+  const fileContents = fs.readFileSync('logins.json', 'utf8');
+  logins = JSON.parse(fileContents || '[]');
+} catch (err) {
+  console.error(`Error reading login file: ${err}`);
+  logins = [];
+}
+// Define a middleware function to check if user is authenticated
+function authenticate(req, res, next) {
+  if (!req.session || !req.session.isAuthenticated) {
+    return res.redirect('/login');
+  }
+  next();
+}
+// Define routes for login and logout
+app.get('/login', (req, res) => {
+  res.render('login');
+});
+
+app.post('/login', (req, res) => {
+  const { username, password } = req.body;
+  const user = logins.find((u) => u.username === username);
+  if (user && bcrypt.compareSync(password, user.password)) {
+    req.session.isAuthenticated = true;
+    req.session.username = username;
+    return  res.redirect('/interface');
+  }
+  res.render('login', { error: 'Invalid username or password' });
+});
+
 app.get('/logout', (req, res) => {
   req.session.destroy((err) => {
     if (err) {
       console.log(err);
     }
-    res.redirect('/login');
+    res.redirect('/login')});
   });
+
+
 // Define routes for registration
 app.get('/register', (req, res) => {
   res.render('register');
 });
-app.get('/interface', (req, res) => {
-  // Render the interface view and pass the chat log as well
-  const myChatbot = app.locals.myChatbot; 
-  res.render('interface', { myChatbot });
-});
 
-app.post('/interface', (req, res) => {
-  const message = req.body.message;
-  app.locals.myChatbot.sendMessage(message);
-  // Redirect to the '/interface' route to display the updated chat log
-  res.redirect('/interface');
-
-});
 	
 	app.post('/register', (req, res) => {
   const { username, email, password } = req.body;
@@ -215,5 +210,4 @@ app.get('/home', authenticate, (req, res) => {
 // Start server
 app.listen(3000, () => {
   console.log('Server started on port 3000');
-
-app.listen(3000, () => console.log('Server listening on port 3000...'));
+});
