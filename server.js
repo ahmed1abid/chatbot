@@ -3,10 +3,14 @@ const bodyParser = require('body-parser');
 const app = express();
 const ejs = require('ejs');
 const Classchatbot = require('./Classchatbot'); // import the Classchatbot class
+import { config } from 'dotenv'; // import the config function from the dotenv module for the mongoDB connection
 
-app.use(bodyParser.json());
-app.set('view engine', 'ejs');
-app.use(bodyParser.urlencoded({ extended: true }));
+config(); // execute the config function to read the .env file and set the environment variables
+console.log(process.env.DB_URI); // print the value of the DB_URI environment variable to the console
+
+app.use(bodyParser.json()); // parse JSON body data
+app.set('view engine', 'ejs'); // set EJS as the view engine
+app.use(bodyParser.urlencoded({ extended: true })); // parse URL-encoded body data
 
 
 app.get('/', (req, res) => {
