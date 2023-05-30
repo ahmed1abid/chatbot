@@ -3,102 +3,82 @@ const bodyParser = require('body-parser');
 const app = express();
 const ejs = require('ejs');
 const Classchatbot = require('./Classchatbot'); // import the Classchatbot class
-import { config } from 'dotenv'; // import the config function from the dotenv module for the mongoDB connection
-
-config(); // execute the config function to read the .env file and set the environment variables
+require('dotenv').config({ path:__dirname+'/.env'} ); // import and configure dotenv
+const MongoClient = require('mongodb').MongoClient; // import MongoClient from mongodb
+const bcrypt = require('bcrypt');
+const saltRounds = 10;
+const session = require('express-session');
+const path = require('path');
 console.log(process.env.DB_URI); // print the value of the DB_URI environment variable to the console
 
-app.use(bodyParser.json()); // parse JSON body data
+const uri = "mongodb+srv://yasserblank:DaaNRaQXEtHa8NO1@cluster0.f7iqrzx.mongodb.net/?retryWrites=true&w=majority";
 app.set('view engine', 'ejs'); // set EJS as the view engine
-app.use(bodyParser.urlencoded({ extended: true })); // parse URL-encoded body data
+app.use(bodyParser.urlencoded({ extended: true }));
 
+async function listDatabases(client){
+  const databasesList = await client.db().admin().listDatabases();
+  console.log("Databases:");
+  databasesList.databases.forEach(db => 
+    console.log(` - ${db.name}`));
+}
+// Use connect method to connect to the server
+async function run(){
+  const client = new MongoClient(uri);
+  try{
+    await client.connect();
+    console.log("Connected correctly to server");
+    await listDatabases(client);
+  }catch(err){
+    console.log(err);
+  } finally{  
+    await client.close();
+  }
+}
 
-app.get('/', (req, res) => {
-  res.render('home.ejs');
-});
+async function createUser(newListing){
+  const client = new MongoClient(uri);
+  try{
+    await client.connect();
+    console.log("Connected correctly to server");
+    const result = await client.db("chatbot_data").collection("accounts").insertOne(newListing);
+    console.log(`New account created with the following id: ${result.insertedId}`);
+  }catch(err){
+    console.log(err);
+  } finally{  
+    await client.close();
+  }
+}
+
+async function getUser(username){
+  const client = new MongoClient(uri);
+  try{
+    await client.connect();
+    console.log("Connected correctly to server");
+    const result = await client.db("chatbot_data").collection("accounts").findOne({username: username});
+    if(result){
+      console.log(`User with username ${result.username} and password ${result.password} found`);
+      return  result;
+    }
+    else{
+      console.log(`User with username ${username} not found`);
+      return null;
+    }
+  }catch(err){
+    console.log(err);
+  } finally{  
+    await client.close();
+  }
+}
+
 // Define a data model to represent ChatBots and their associated information
 const chatBots = [
   { id: 1, name: 'Steeve', personality: 'standard.rive', interface: 'web' },
   { id: 2, name: 'Eude', personality: 'custom.rive', interface: 'discord' },
   { id: 3, name: 'Hubert', personality: 'advanced.rive', interface: 'slack' }
 ];
-// Create a new ChatBot
-app.post('/chatbots', (req, res) => {
-  const chatBot = {
-    id: chatBots.length + 1,
-    name: req.body.name,
-    personality: req.body.personality,
-    interface: req.body.interface
-  };
-  chatBots.push(chatBot);
-  res.status(201).json(chatBot);
-});
 
-// Get all ChatBots
-app.get('/chatbots', (req, res) => {
-  res.json(chatBots);
-});
-
-// Get a specific ChatBot by ID
-app.get('/chatbots/:id', (req, res) => {
-  const chatBot = chatBots.find(c => c.id === parseInt(req.params.id));
-  if (!chatBot) return res.status(404).send('The ChatBot with the given ID was not found.');
-  res.json(chatBot);
-});
-
-// Update an existing ChatBot
-app.put('/chatbots/:id', (req, res) => {
-  const chatBot = chatBots.find(c => c.id === parseInt(req.params.id));
-  if (!chatBot) return res.status(404).send('The ChatBot with the given ID was not found.');
-  chatBot.name = req.body.name;
-  chatBot.personality = req.body.personality;
-  chatBot.interface = req.body.interface;
-  res.json(chatBot);
-});
-
-// Delete a ChatBot
-app.delete('/chatbots/:id', (req, res) => {
-  const chatBot = chatBots.find(c => c.id === parseInt(req.params.id));
-  if (!chatBot) return res.status(404).send('The ChatBot with the given ID was not found.');
-  const index = chatBots.indexOf(chatBot);
-  chatBots.splice(index, 1);
-  res.json(chatBot);
-});
-
-// Modify the personality of a ChatBot
-app.put('/chatbots/:id/personality', (req, res) => {
-  const chatBot = chatBots.find(c => c.id === parseInt(req.params.id));
-  if (!chatBot) return res.status(404).send('The ChatBot with the given ID was not found.');
-
-  // Update the personality file of the ChatBot
-  chatBot.personality = req.body.personality;
-  bot.updatePersonality(chatBot.personality);
-
-  res.json(chatBot);
-});
-app.get('/interface', (req, res) => {
-  // Render the interface view and pass the chat log as well
-  const myChatbot = app.locals.myChatbot; 
-  res.render('interface', { myChatbot });
-});
-
-app.post('/interface', (req, res) => {
-  const message = req.body.message;
-  app.locals.myChatbot.sendMessage(message);
-  // Redirect to the '/interface' route to display the updated chat log
-  res.redirect('/interface');
-
-});
-// Modify the interface of a ChatBot
-app.put('/chatbots/:id/interface', (req, res) => {
-  const chatBot = chatBots.find(c => c.id === parseInt(req.params.id));
-  if (!chatBot) return res.status(404).send('The ChatBot with the given ID was not found.');
-
-  // Update the interface file of the ChatBot
-  chatBot.interface = req.body.interface;
-  bot.updateInterface(chatBot.interface);
-
-  res.json(chatBot);
+app.get('/', (req, res) => {
+  res.render('home');
 });
 
 app.get('/addbot', (req, res) => {
@@ -126,17 +106,22 @@ app.post('/create-chatbot', (req, res) => {
   myChatbot.loadBrainFile(`${brainFile}`);
   app.locals.myChatbot = myChatbot;
 
-  console.log(app.locals.myChatbot);
   // Redirect to the '/interface' route
   res.redirect('/interface');
 });
 
+app.get('/interface', (req, res) => {
+  // Render the interface view and pass the chat log as well
+  const myChatbot = app.locals.myChatbot; 
+  res.render('interface', { myChatbot });
+});
 
-const fs = require('fs');
-const bcrypt = require('bcrypt');
-const saltRounds = 10;
-const session = require('express-session');
-
+app.post('/interface', (req, res) => {
+  const message = req.body.message;
+  app.locals.myChatbot.sendMessage(message);
+  // Redirect to the '/interface' route to display the updated chat log
+  res.redirect('/interface');
+});
 
 // Set up session middleware
 app.use(session({
@@ -144,16 +129,6 @@ app.use(session({
   resave: false,
   saveUninitialized: true
 }));
-
-// Read login information from file
-let logins;
-try {
-  const fileContents = fs.readFileSync('logins.json', 'utf8');
-  logins = JSON.parse(fileContents || '[]');
-} catch (err) {
-  console.error(`Error reading login file: ${err}`);
-  logins = [];
-}
 // Define a middleware function to check if user is authenticated
 function authenticate(req, res, next) {
   if (!req.session || !req.session.isAuthenticated) {
@@ -168,13 +143,19 @@ app.get('/login', (req, res) => {
 
 app.post('/login', (req, res) => {
   const { username, password } = req.body;
-  const user = logins.find((u) => u.username === username);
-  if (user && bcrypt.compareSync(password, user.password)) {
-    req.session.isAuthenticated = true;
-    req.session.username = username;
-    return  res.redirect('/interface');
-  }
-  res.render('login', { error: 'Invalid username or password' });
+  (async () => {
+    const user = await getUser(username);
+
+    if (user && bcrypt.compareSync(password, user.password)) {
+      req.session.isAuthenticated = true;
+      req.session.username = username;
+      return res.redirect('interface.ejs');
+    }
+    res.render('login', { error: 'Invalid username or password' });
+  })().catch(err => {
+    console.log(err);
+    res.status(500).send('Internal Server Error');
+  });
 });
 
 app.get('/logout', (req, res) => {
@@ -183,7 +164,7 @@ app.get('/logout', (req, res) => {
       console.log(err);
     }
     res.redirect('/login')});
-  });
+});
 
 
 // Define routes for registration
@@ -191,19 +172,26 @@ app.get('/register', (req, res) => {
   res.render('register');
 });
 
-	
-	app.post('/register', (req, res) => {
+app.post('/register', (req, res) => {
   const { username, email, password } = req.body;
-  const user = logins.find((u) => u.username === username);
-  if (user) {
-    return res.render('register', { error: 'Username already exists' });
-  }
-  const hash = bcrypt.hashSync(password, saltRounds);
-  logins.push({ username, email, password: hash });
-  fs.writeFileSync('logins.json', JSON.stringify(logins));
-  req.session.isAuthenticated = true;
-  req.session.username = username;
-  res.redirect('/home');
+  (async () => {
+    const user = await getUser(username);
+    if (user) {
+      return res.render('register', { error: 'Username already exists' });
+    }
+    const hash = bcrypt.hashSync(password, saltRounds);
+    createUser({
+      username : username,
+      email : email,
+      password : hash
+    }).catch(console.error);
+    req.session.isAuthenticated = true;
+    req.session.username = username;
+    res.redirect('/home');
+  })().catch(err => {
+    console.log(err);
+    res.status(500).send('Internal Server Error');
+  });
 });
 
 // Define route for home page
