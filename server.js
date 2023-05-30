@@ -3,72 +3,15 @@ const bodyParser = require('body-parser');
 const app = express();
 const ejs = require('ejs');
 const Classchatbot = require('./Classchatbot'); // import the Classchatbot class
+const databaseHandler = require('./databaseHandler.js'); // import the databaseHandler module
 require('dotenv').config({ path:__dirname+'/.env'} ); // import and configure dotenv
 const MongoClient = require('mongodb').MongoClient; // import MongoClient from mongodb
 const bcrypt = require('bcrypt');
 const saltRounds = 10;
 const session = require('express-session');
-const path = require('path');
 console.log(process.env.DB_URI); // print the value of the DB_URI environment variable to the console
-
-const uri = "mongodb+srv://yasserblank:DaaNRaQXEtHa8NO1@cluster0.f7iqrzx.mongodb.net/?retryWrites=true&w=majority";
 app.set('view engine', 'ejs'); // set EJS as the view engine
 app.use(bodyParser.urlencoded({ extended: true }));
-
-async function listDatabases(client){
-  const databasesList = await client.db().admin().listDatabases();
-  console.log("Databases:");
-  databasesList.databases.forEach(db => 
-    console.log(` - ${db.name}`));
-}
-// Use connect method to connect to the server
-async function run(){
-  const client = new MongoClient(uri);
-  try{
-    await client.connect();
-    console.log("Connected correctly to server");
-    await listDatabases(client);
-  }catch(err){
-    console.log(err);
-  } finally{  
-    await client.close();
-  }
-}
-
-async function createUser(newListing){
-  const client = new MongoClient(uri);
-  try{
-    await client.connect();
-    console.log("Connected correctly to server");
-    const result = await client.db("chatbot_data").collection("accounts").insertOne(newListing);
-    console.log(`New account created with the following id: ${result.insertedId}`);
-  }catch(err){
-    console.log(err);
-  } finally{  
-    await client.close();
-  }
-}
-
-async function getUser(username){
-  const client = new MongoClient(uri);
-  try{
-    await client.connect();
-    console.log("Connected correctly to server");
-    const result = await client.db("chatbot_data").collection("accounts").findOne({username: username});
-    if(result){
-      console.log(`User with username ${result.username} and password ${result.password} found`);
-      return  result;
-    }
-    else{
-      console.log(`User with username ${username} not found`);
-      return null;
-    }
-  }catch(err){
-    console.log(err);
-  } finally{  
-    await client.close();
-  }
-}
 
 // Define a data model to represent ChatBots and their associated information
 const chatBots = [
@@ -144,12 +87,12 @@ app.get('/login', (req, res) => {
 app.post('/login', (req, res) => {
   const { username, password } = req.body;
   (async () => {
-    const user = await getUser(username);
+    const user = await databaseHandler.getUser(username);
 
     if (user && bcrypt.compareSync(password, user.password)) {
       req.session.isAuthenticated = true;
       req.session.username = username;
-      return res.redirect('interface.ejs');
+      return res.redirect('addbot');
     }
     res.render('login', { error: 'Invalid username or password' });
   })().catch(err => {
@@ -180,7 +123,7 @@ app.post('/register', (req, res) => {
       return res.render('register', { error: 'Username already exists' });
     }
     const hash = bcrypt.hashSync(password, saltRounds);
-    createUser({
+    databaseHandler.createUser({
       username : username,
       email : email,
       password : hash
