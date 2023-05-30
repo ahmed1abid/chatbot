@@ -5,7 +5,6 @@ const ejs = require('ejs');
 const Classchatbot = require('./Classchatbot'); // import the Classchatbot class
 const databaseHandler = require('./databaseHandler.js'); // import the databaseHandler module
 require('dotenv').config({ path:__dirname+'/.env'} ); // import and configure dotenv
-const MongoClient = require('mongodb').MongoClient; // import MongoClient from mongodb
 const bcrypt = require('bcrypt');
 const saltRounds = 10;
 const session = require('express-session');
