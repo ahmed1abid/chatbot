@@ -13,12 +13,6 @@ console.log(process.env.DB_URI); // print the value of the DB_URI environment va
 app.set('view engine', 'ejs'); // set EJS as the view engine
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// Define a data model to represent ChatBots and their associated information
-const chatBots = [
-  { id: 1, name: 'Steeve', personality: 'standard.rive', interface: 'web' },
-  { id: 2, name: 'Eude', personality: 'custom.rive', interface: 'discord' },
-  { id: 3, name: 'Hubert', personality: 'advanced.rive', interface: 'slack' }
-];
 
 app.get('/', (req, res) => {
   res.render('home');
