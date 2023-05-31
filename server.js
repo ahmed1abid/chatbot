@@ -1,6 +1,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const app = express();
+
 const ejs = require('ejs');
 const Classchatbot = require('./Classchatbot'); // import the Classchatbot class
 const databaseHandler = require('./databaseHandler.js'); // import the databaseHandler module
@@ -18,7 +19,7 @@ app.use(session({
   resave: false,
   saveUninitialized: true
 }));
-
+app.use(express.static('public'));
 app.get('/', (req, res) => {
   res.render('home');
 });
