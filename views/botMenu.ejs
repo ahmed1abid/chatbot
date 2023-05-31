@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Bot Menu</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+  <div class="container">
+    <h1 class="mt-5">Bot Menu</h1>
+    <ul class="list-group mt-4">
+      <% for (let i = 0; i < botNames.length; i++) { %>
+        <li class="list-group-item">
+          <form action="/create-chatbot" method="POST">
+            <input type="hidden" name="name" value="<%= botNames[i] %>">
+            <button type="submit" class="btn btn-primary"><%= botNames[i] %></button>
+          </form>
+        </li>
+      <% } %>
+    </ul>
+    <form action="/addbot" method="GET" class="mt-4">
+      <button type="submit" class="btn btn-primary">Add Bot</button>
+    </form>
+  </div>
+</body>
+</html>

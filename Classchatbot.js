@@ -1,7 +1,8 @@
 const RiveScript = require('rivescript');
 
 class Classchatbot {
-  constructor(name, personality) {
+  constructor(user, name, personality) {
+    this.user = user; 
     this.name = name;
     this.personality = personality;
     this.chatlog = [];
@@ -51,7 +52,12 @@ class Classchatbot {
 
   getChatLog() {
     return this.chatlog;
+  } 
+  setUservar(user, name){
+    this.brain.setUservar(user, name);
   }
-  
+  getUservar(user, name){
+    this.brain.getUservar(user, name);
+  }
 }
 module.exports = Classchatbot;
