@@ -18,7 +18,7 @@ class Classchatbot {
     });
   }
   sendMessage(message) {
-    const reply = this.brain.reply('localuser', message);
+    const reply = this.brain.reply(this.user, message);
     this.addToChatLog(message, true);
     this.addToChatLog(reply, false);
     return reply;
@@ -58,6 +58,9 @@ class Classchatbot {
   }
   getUservar(user, name){
     this.brain.getUservar(user, name);
+  }
+  setUservars(user, data){
+    this.brain.setUservars(user, data);
   }
 }
 module.exports = Classchatbot;

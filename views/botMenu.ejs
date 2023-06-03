@@ -11,7 +11,7 @@
     <ul class="list-group mt-4">
       <% for (let i = 0; i < botNames.length; i++) { %>
         <li class="list-group-item">
-          <form action="/create-chatbot" method="POST">
+          <form action="/botMenu" method="POST">
             <input type="hidden" name="name" value="<%= botNames[i] %>">
             <button type="submit" class="btn btn-primary"><%= botNames[i] %></button>
           </form>

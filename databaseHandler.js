@@ -89,7 +89,7 @@ async function getBots(user){
   try{
     await client.connect();
     console.log("Connected correctly to server");
-    const result = await client.db("chatbot_data").collection("bots").find({user: user},{projection:{name:0}}).toArray();
+    const result = await client.db("chatbot_data").collection("bots").find({user: user}).toArray();
     if(result.length > 0){
       console.log(`Bots found : ${result.length}`);
       return  result;
@@ -109,7 +109,7 @@ async function getChatLog(user, name){
   try{
     await client.connect();
     console.log("Connected correctly to server");
-    const result = await client.db("chatbot_data").collection("chatlogs").find({user: user, name: name});
+    const result = await client.db("chatbot_data").collection("chatlogs").find({user: user, botName: name});
     if(result){
       console.log(`Chatlogs found`);
       return  result.chatlog;
@@ -129,7 +129,7 @@ async function getPersonality(user, name){
   try{
     await client.connect();
     console.log("Connected correctly to server");
-    const result = await client.db("chatbot_data").collection("personalities").find({user: user, name: name});
+    const result = await client.db("chatbot_data").collection("personalities").find({user: user, botName: name});
     if(result){
       console.log(`Personalities found`);
       return  result.personality;
@@ -158,4 +158,56 @@ async function addChatbot(chatbotListing){
   }
 }
 
-module.exports = {run, listDatabases, createUser, getUser, createBot, updateBot, getBots,addChatbot, getChatLog, getPersonality};
+function uservars_transformer(data){
+  const newData = {};
+  let shouldAdd = false;
+  keys = Object.keys(data)
+  for (let i = 0; i < keys.length; i++) {
+    if (shouldAdd) {
+      newkey = keys[i].toString();
+      newData[newkey] = data[keys[i]];
+    }
+    if (keys[i]== '__last_triggers__') {
+      shouldAdd = true;
+    }
+  }
+  console.log(newData);
+  return newData;
+}
+async function updateData(user,name,data){
+  const client = new MongoClient(uri);
+  console.log(data);
+  try{
+    await client.connect();
+    console.log("Connected correctly to server");
+    const result = await client.db("chatbot_data").collection("uservars").updateOne({user: user, botName: name},data,{ upsert: true });
+    console.log(`New chatbot updated with the following id: ${result.insertedId}`);
+  }catch(err){
+    console.log(err);
+  } finally{
+    await client.close();
+  }
+}
+
+async function getUservars(user, name){
+  const client = new MongoClient(uri);
+  try{
+    await client.connect();
+    console.log("Connected correctly to server");
+    const result = await client.db("chatbot_data").collection("uservars").findOne({botName: name, user: user},{projection : {_id : 0 , botName: 0, user: 0}});
+    if(result){
+      console.log(`Uservars found`);
+      return  result;
+    }
+    else{
+      console.log(`No uservars found`);
+      return null;
+    }
+  } catch(err){
+    console.log(err);
+  } finally{
+    await client.close();
+  }
+}
+
+module.exports = {run, listDatabases, createUser, getUser, createBot, updateBot, getBots,addChatbot, getChatLog, getPersonality, uservars_transformer, updateData, getUservars};

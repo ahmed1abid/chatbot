@@ -28,7 +28,7 @@ app.get('/addbot', (req, res) => {
 });
 
 app.post('/create-chatbot', (req, res) => {
-  if(req.isAuthenticated == false){
+  if(req.session.isAuthenticated == false){
     res.render('notlogged')
   }
   else{
@@ -49,19 +49,16 @@ app.post('/create-chatbot', (req, res) => {
     }
 
   // Create and configure the chatbot with the selected name and loaded brain file
-    const myChatbot = new Classchatbot(user = "admin" ,name, personality);
+    const myChatbot = new Classchatbot(req.session.username ,name, personality);
     myChatbot.loadBrainFile(`${brainFile}`);
-    myChatbot.setUservar("admin", name);
     req.session.botNames += [name];
     app.locals.myChatbot = myChatbot;
-    chatbotListing = {
+     chatbotListing = {
       user : req.session.username,
-      name : name,
-      chatlog : req.session.chatlog
+      botName : name
     }
     databaseHandler.addChatbot(chatbotListing);
-  // Redirect to the '/interface' route
-    req.session.botName = name;
+  // Redirect to the '/interface' route to display the chatbot interface
     res.redirect('/interface');
   }
 });
@@ -75,23 +72,17 @@ app.get('/interface', (req, res) => {
 app.post('/interface', (req, res) => {
   const message = req.body.message;
   app.locals.myChatbot.sendMessage(message);
-  req.session.botName = app.locals.myChatbot.name;
+  botName = app.locals.myChatbot.name;
   // Redirect to the '/interface' route to display the updated chat log
-  req.session.chatlog = app.locals.myChatbot.getChatLog();
+  console.log(botName);
+  //console.log(app.locals.myChatbot.getChatLog());
   res.redirect('/interface');
-  const filter = {
-    user : req.session.username,
-    name : req.session.botName
+  uservars = app.locals.myChatbot.brain.getUservars(req.session.username);
+  new_uservars = databaseHandler.uservars_transformer(uservars)
+  data = {
+    "$set": new_uservars
   }
-  const options = { upsert: true };
-  const updateDocument ={
-    $set: {
-      chatlog : req.session.chatlog
-    }
-  }
-  async () => {
-    await databaseHandler.updateChatbot(filter, options, updateDocument);
-  }
+  databaseHandler.updateData(req.session.username,botName,data);
 });
 
 
@@ -167,13 +158,13 @@ app.get('/home', authenticate, (req, res) => {
 app.get('/botMenu', (req, res) => {
   // Get the bot names associated with the user in the session
   (async() => {
-    const bots = databaseHandler.getBots(req.session.user); 
+    const bots = await databaseHandler.getBots(req.session.username); 
     if (bots == null) {
       console.log("none");
       return res.render('botMenu', { botNames: [] });
     }
     else{
-      const botNames = [];
+      const botNames = bots.map(bot => bot.botName);
       req.session.botNames = botNames;
       // Render the botMenu view and pass the bot names as a local variable
       return res.render('botMenu', { botNames });
@@ -184,28 +175,34 @@ app.get('/botMenu', (req, res) => {
   })
 });
 app.post('/botMenu', (req, res) => {
-  req.session.botName = req.body.botName;
-  req.session.chatlog = databaseHandler.getChatlog(req.session.user, req.session.botName);
-  req.session.personality = databaseHandler.getPersonality(req.session.user, req.session.botName);
-  // Load the brain file based on the selected personality
-  let brainFile;
-  if (personality === 'standard') {
-    brainFile = 'standard.rive';
-  } else if (personality === 'friendly') {
-    brainFile = 'friendly.rive';
-  } else if (personality === 'professional') {
-    brainFile = 'professional.rive';
-  } else if (personality === 'humorous') {
-    brainFile = 'humorous.rive';
-  }
-
-// Create and configure the chatbot with the selected name and loaded brain file
-  const myChatbot = new Classchatbot(user = req.session.username ,req.session.botName, personality);
-  myChatbot.loadBrainFile(`${brainFile}`);
-  myChatbot.setUservar(req.session.username, req.session.botName);
-  app.locals.myChatbot = myChatbot;
-// Redirect to the '/interface' route
-  res.redirect('/interface');
+  (async() => { 
+    app.locals.botName = req.body.name;
+    console.log(app.locals.botName);
+    app.locals.personality = 'standard'; //databaseHandler.getPersonality(req.session.username, req.session.botName);
+    // Load the brain file based on the selected personality
+    let brainFile;
+    if (app.locals.personality === 'standard') {
+      brainFile = 'standard.rive';
+    } else if (app.locals.personality === 'friendly') {
+      brainFile = 'friendly.rive';
+    } else if (app.locals.personality === 'professional') {
+      brainFile = 'professional.rive';
+    } else if (app.locals.personality === 'humorous') {
+      brainFile = 'humorous.rive';
+    }
+  //  Create and configure the chatbot with the selected name and loaded brain file
+    const myChatbot = new Classchatbot(req.session.username ,app.locals.botName, app.locals.personality);
+    myChatbot.loadBrainFile(`${brainFile}`);
+    uservars = await databaseHandler.getUservars(req.session.username, app.locals.botName);
+    console.log(uservars);
+    myChatbot.setUservars(req.session.username, uservars);
+    app.locals.myChatbot = myChatbot;
+  //  Redirect to the '/interface' route
+    res.redirect('/interface');
+  })().catch(err => {
+    console.log(err);
+    res.status(500).send('Internal Server Error');
+  })
 });
 
 // Start server
