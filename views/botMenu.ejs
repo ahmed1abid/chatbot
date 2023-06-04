@@ -11,15 +11,22 @@
     <ul class="list-group mt-4">
       <% for (let i = 0; i < botNames.length; i++) { %>
         <li class="list-group-item">
-          <form action="/botMenu" method="POST">
+          <form action="/botMenu" method="POST" style="display: inline;">
             <input type="hidden" name="name" value="<%= botNames[i] %>">
             <button type="submit" class="btn btn-primary"><%= botNames[i] %></button>
+          </form>
+          <form action="/deleteBot" method="POST" style="display: inline;">
+            <input type="hidden" name="name" value="<%= botNames[i] %>">
+            <button type="submit" class="btn btn-danger">Delete</button>
           </form>
         </li>
       <% } %>
     </ul>
     <form action="/addbot" method="GET" class="mt-4">
       <button type="submit" class="btn btn-primary">Add Bot</button>
+    </form>
+    <form action="/logout" method="GET" class="mt-4">
+      <button type="submit" class="btn btn-secondary">Logout</button>
     </form>
   </div>
 </body>

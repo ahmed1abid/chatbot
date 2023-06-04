@@ -209,5 +209,19 @@ async function getUservars(user, name){
     await client.close();
   }
 }
+async function deleteBot(user,name){
+  const client = new MongoClient(uri);
+  try{
+    await client.connect();
+    console.log("Connected correctly to server");
+    const result1 = await client.db("chatbot_data").collection("bots").deleteOne({user: user, botName: name});
+    const result2 = await client.db("chatbot_data").collection("uservars").deleteOne({user: user, botName: name});
+    console.log(`Chatbot deleted with the following id: ${result.insertedId}`);
+  }catch(err){
+    console.log(err);
+  } finally{  
+    await client.close();
+  } 
+}
 
-module.exports = {run, listDatabases, createUser, getUser, createBot, updateBot, getBots,addChatbot, getChatLog, getPersonality, uservars_transformer, updateData, getUservars};
+module.exports = {run, listDatabases, createUser, getUser, createBot, updateBot, getBots,addChatbot, getChatLog, getPersonality, uservars_transformer, updateData, getUservars, deleteBot};

@@ -18,52 +18,59 @@ app.use(session({
   resave: false,
   saveUninitialized: true
 }));
-
+// Define a middleware function to check if user is authenticated
+function authenticate(req, res, next) {
+  if (!req.session || !req.session.isAuthenticated) {
+    return res.redirect('/login');
+  }
+  next();
+}
 app.get('/', (req, res) => {
   res.render('home');
 });
+app.use(express.static('public'));
 
-app.get('/addbot', (req, res) => {
+app.get('/addbot',authenticate, (req, res) => {
   res.render('addbot');
+});
+app.post('/deleteBot',authenticate, (req, res) => {
+  user = req.session.username;
+  botName = req.body.name;
+  databaseHandler.deleteBot(user,botName);
+  res.redirect('/botMenu')
 });
 
 app.post('/create-chatbot', (req, res) => {
-  if(req.session.isAuthenticated == false){
-    res.render('notlogged')
-  }
-  else{
-    const name = req.body.name;
-    const personality = req.body.personality;
-  
+  const name = req.body.name;
+  const personality = req.body.personality;
 
   // Load the brain file based on the selected personality
-    let brainFile;
-    if (personality === 'standard') {
-      brainFile = 'standard.rive';
-    } else if (personality === 'friendly') {
-      brainFile = 'friendly.rive';
-    } else if (personality === 'professional') {
-      brainFile = 'professional.rive';
-    } else if (personality === 'humorous') {
-      brainFile = 'humorous.rive';
-    }
-
-  // Create and configure the chatbot with the selected name and loaded brain file
-    const myChatbot = new Classchatbot(req.session.username ,name, personality);
-    myChatbot.loadBrainFile(`${brainFile}`);
-    req.session.botNames += [name];
-    app.locals.myChatbot = myChatbot;
-     chatbotListing = {
-      user : req.session.username,
-      botName : name
-    }
-    databaseHandler.addChatbot(chatbotListing);
-  // Redirect to the '/interface' route to display the chatbot interface
-    res.redirect('/interface');
+  let brainFile;
+  if (personality === 'standard') {
+    brainFile = 'standard.rive';
+  } else if (personality === 'friendly') {
+    brainFile = 'friendly.rive';
+  } else if (personality === 'professional') {
+    brainFile = 'professional.rive';
+  } else if (personality === 'humorous') {
+    brainFile = 'humorous.rive';
   }
+  // Create and configure the chatbot with the selected name and loaded brain file
+  const myChatbot = new Classchatbot(req.session.username ,name, personality);
+  myChatbot.loadBrainFile(`${brainFile}`);
+  req.session.botNames += [name];
+  app.locals.myChatbot = myChatbot;
+   chatbotListing = {
+    user : req.session.username,
+    botName : name
+  }
+  databaseHandler.addChatbot(chatbotListing);
+  // Redirect to the '/interface' route to display the chatbot interface
+  res.redirect('/interface');
+  
 });
 
-app.get('/interface', (req, res) => {
+app.get('/interface',authenticate, (req, res) => {
   // Render the interface view and pass the chat log as well
   const myChatbot = app.locals.myChatbot;
   res.render('interface', { myChatbot });
@@ -86,15 +93,9 @@ app.post('/interface', (req, res) => {
 });
 
 
-// Define a middleware function to check if user is authenticated
-function authenticate(req, res, next) {
-  if (!req.session || !req.session.isAuthenticated) {
-    return res.redirect('/login');
-  }
-  next();
-}
+
 // Define routes for login and logout
-app.get('/login', (req, res) => {
+app.get('/login',(req, res) => {
   res.render('login');
 });
 
@@ -120,7 +121,7 @@ app.get('/logout', (req, res) => {
     if (err) {
       console.log(err);
     }
-    res.redirect('/login')});
+    res.redirect('/')});
 });
 
 
@@ -151,10 +152,6 @@ app.post('/register', (req, res) => {
   });
 });
 
-// Define route for home page
-app.get('/home', authenticate, (req, res) => {
-  res.render('home', { username: req.session.username });
-});
 app.get('/botMenu', (req, res) => {
   // Get the bot names associated with the user in the session
   (async() => {
