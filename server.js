@@ -8,7 +8,6 @@ require('dotenv').config({ path:__dirname+'/.env'} ); // import and configure do
 const bcrypt = require('bcrypt');
 const saltRounds = 10;
 const session = require('express-session');
-console.log(process.env.DB_URI); // print the value of the DB_URI environment variable to the console
 app.set('view engine', 'ejs'); // set EJS as the view engine
 app.use(bodyParser.urlencoded({ extended: true }));
 
